@@ -1,0 +1,5 @@
+{
+  "name": "Avocado Project Manager",
+  "description": "A minimal, clean project management tool. Features AI-driven task breakdown, Kanban boards, and role-based access control.",
+  "requestFramePermissions": []
+}
