@@ -22,6 +22,16 @@ export interface User {
   role: UserRole;
 }
 
+export interface Comment {
+  id: string;
+  taskId: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  content: string;
+  createdAt: number;
+}
+
 export interface Task {
   id: string;
   projectId: string;

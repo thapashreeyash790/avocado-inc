@@ -7,6 +7,7 @@ import * as aiService from './services/geminiService';
 import Layout from './components/Layout';
 import TaskBoard from './components/TaskBoard';
 import TaskList from './components/TaskList';
+import TaskDetailModal from './components/TaskDetailModal';
 import { 
   Sparkles, Plus, LayoutGrid, List as ListIcon, 
   Loader2, X, Lock
@@ -146,6 +147,7 @@ const AppContent = ({ user, setUser }: { user: User, setUser: (u: User | null) =
     const [viewMode, setViewMode] = useState<'list' | 'board'>('board');
     
     // UI States
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [isAIGenerating, setIsAIGenerating] = useState(false);
@@ -238,7 +240,19 @@ const AppContent = ({ user, setUser }: { user: User, setUser: (u: User | null) =
         // Optimistic update
         const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, status } : t);
         setTasks(updatedTasks);
+        if (selectedTask && selectedTask.id === taskId) {
+            setSelectedTask({ ...selectedTask, status });
+        }
         await db.updateTask(taskId, { status });
+    };
+
+    const updateTask = async (taskId: string, updates: Partial<Task>) => {
+        const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, ...updates } : t);
+        setTasks(updatedTasks);
+        if (selectedTask && selectedTask.id === taskId) {
+            setSelectedTask({ ...selectedTask, ...updates });
+        }
+        await db.updateTask(taskId, updates);
     };
 
     return (
@@ -323,11 +337,21 @@ const AppContent = ({ user, setUser }: { user: User, setUser: (u: User | null) =
                             </div>
                         )}
                         {viewMode === 'board' 
-                            ? <TaskBoard tasks={tasks} userRole={user.role} onUpdateStatus={updateTaskStatus} onEditTask={() => {}} />
-                            : <TaskList tasks={tasks} userRole={user.role} onUpdateStatus={updateTaskStatus} onEditTask={() => {}} />
+                            ? <TaskBoard tasks={tasks} userRole={user.role} onUpdateStatus={updateTaskStatus} onEditTask={setSelectedTask} />
+                            : <TaskList tasks={tasks} userRole={user.role} onUpdateStatus={updateTaskStatus} onEditTask={setSelectedTask} />
                         }
                     </div>
                 </div>
+            )}
+
+            {/* Task Detail Modal */}
+            {selectedTask && (
+                <TaskDetailModal 
+                    task={selectedTask}
+                    currentUser={user}
+                    onClose={() => setSelectedTask(null)}
+                    onUpdateTask={updateTask}
+                />
             )}
 
             {/* Create Project Modal */}

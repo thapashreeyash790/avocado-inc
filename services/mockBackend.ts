@@ -1,10 +1,11 @@
-import { User, Project, Task, TaskStatus, TaskPriority, UserRole } from '../types';
+import { User, Project, Task, TaskStatus, TaskPriority, UserRole, Comment } from '../types';
 
 // Keys for LocalStorage
 const STORAGE_KEYS = {
   USERS: 'avocado_users',
   PROJECTS: 'avocado_projects',
   TASKS: 'avocado_tasks',
+  COMMENTS: 'avocado_comments',
   CURRENT_USER: 'avocado_current_user',
 };
 
@@ -22,6 +23,9 @@ const seedData = () => {
   }
   if (!localStorage.getItem(STORAGE_KEYS.TASKS)) {
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.COMMENTS)) {
+    localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify([]));
   }
 };
 
@@ -72,8 +76,6 @@ export const getCurrentUser = (): User | null => {
 export const getProjects = async (userId: string): Promise<Project[]> => {
   await delay(400);
   const projects: Project[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROJECTS) || '[]');
-  // In this demo, we'll allow all users to see all projects for simplicity, 
-  // or you could filter by access. Let's return all projects so clients can see them.
   return projects;
 };
 
@@ -124,7 +126,6 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
 };
 
 export const updateTask = async (taskId: string, updates: Partial<Task>): Promise<Task> => {
-  // Optimistic UI updates often skip delay, but we'll keep it slight
   await delay(100); 
   const tasks: Task[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.TASKS) || '[]');
   const index = tasks.findIndex((t) => t.id === taskId);
@@ -140,4 +141,30 @@ export const deleteTasks = async (taskIds: string[]): Promise<void> => {
     let tasks: Task[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.TASKS) || '[]');
     tasks = tasks.filter(t => !taskIds.includes(t.id));
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+}
+
+// --- Comment Services ---
+
+export const getComments = async (taskId: string): Promise<Comment[]> => {
+    await delay(200);
+    const comments: Comment[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMENTS) || '[]');
+    // Sort by createdAt descending
+    return comments.filter(c => c.taskId === taskId).sort((a,b) => b.createdAt - a.createdAt);
+}
+
+export const addComment = async (taskId: string, user: User, content: string): Promise<Comment> => {
+    await delay(200);
+    const comments: Comment[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMENTS) || '[]');
+    const newComment: Comment = {
+        id: generateId(),
+        taskId,
+        userId: user.id,
+        userName: user.name,
+        userAvatar: user.avatar || '',
+        content,
+        createdAt: Date.now()
+    };
+    comments.push(newComment);
+    localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(comments));
+    return newComment;
 }
